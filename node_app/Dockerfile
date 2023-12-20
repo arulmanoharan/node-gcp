@@ -1,35 +1,32 @@
-# Stage 1: Build stage
-FROM node:14 AS build
+# Use a minimal base image
+FROM node:14-alpine AS builder
 
-WORKDIR /node-gcp/node-app/
+# Set the working directory
+WORKDIR /node_app
 
-# Copy package.json and package-lock.json separately
-# This allows for better Docker caching of dependencies
+# Copy only the package.json and package-lock.json files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install
 
-# Copy the rest of the application code
+# Copy the application code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application (if needed)
+# RUN npm run build
 
-# Stage 2: Production stage
+# Use a smaller base image for the final image
 FROM node:14-alpine
 
-WORKDIR /node-gcp/node-app/
+# Set the working directory
+WORKDIR /node_app
 
-# Copy only necessary files from the build stage
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/dist ./dist
+# Copy only the necessary files from the builder stage
+COPY --from=builder /node_app .
 
-# Install only production dependencies
-RUN npm ci --only=production
-
-# Expose the port your app runs on
+# Expose the application port (if needed)
 EXPOSE 3000
 
-# Define the startup command
-CMD [ "npm", "start" ]
+# Define the command to run your application
+CMD ["npm", "start"]
