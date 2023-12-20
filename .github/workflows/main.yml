@@ -35,7 +35,7 @@ jobs:
     - name: Build and push Docker image to GCR
       run: |
         export IMAGE_NAME=gcr.io/${{ secrets.GCP_PROJECT_ID }}/node_app
-        docker buildx build -t $IMAGE_NAME $(pwd)/node-app
+        docker buildx build -t $IMAGE_NAME $(pwd)/node_app
         docker tag $IMAGE_NAME $IMAGE_NAME:$GITHUB_SHA
         docker push $IMAGE_NAME:$GITHUB_SHA
         docker push $IMAGE_NAME:latest
