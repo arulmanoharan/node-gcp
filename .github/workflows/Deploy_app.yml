@@ -27,7 +27,9 @@ jobs:
           
 
       - name: Configure Terraform Backend
-        run: terraform init 
+        run: |
+          cd cloudsql/
+          terraform init 
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -var-file="terraform.tfvars"
