@@ -58,7 +58,7 @@ jobs:
       run: terraform apply -auto-approve \
           -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
           -var="gcp_credentials_file=${{ secrets.GCP_SA_KEY }}" \
-          -var="image_tag=${{ env.IMAGE_SHA }}"
+          -var="image_tag=${{ env.IMAGE_SHA }}" .
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
