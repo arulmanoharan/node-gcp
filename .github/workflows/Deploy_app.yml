@@ -32,4 +32,6 @@ jobs:
           terraform init 
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var-file="terraform.tfvars"
+        run: |
+          cd cloudsql/
+          terraform apply -auto-approve -var-file="terraform.tfvars"
