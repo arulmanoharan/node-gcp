@@ -34,4 +34,4 @@ jobs:
       - name: Terraform Apply
         run: |
           cd cloudsql/
-          terraform apply -auto-approve -var-file="terraform.tfvars"
+          terraform apply -auto-approve -var-file="terraform.tfvars" -var="project_id=${{ secrets.GCP_PROJECT_ID }}"
