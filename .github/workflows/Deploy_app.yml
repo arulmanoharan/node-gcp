@@ -27,6 +27,8 @@ jobs:
 
       - name: Deploy Application
         run: |
-          cd ${pwd}/cloudsql/
+          pwd
+          ls -la
+          cd cloudsql/
           terraform init
           terraform apply -auto-approve -var-file="terraform.tfvars"
