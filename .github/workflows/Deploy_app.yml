@@ -1,0 +1,35 @@
+name: Deploy Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_name:
+        description: 'Secret Deployment'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.9
+
+      - name: Configure GCP credentials
+        run: echo "$GCP_SA_KEY" > key.json && gcloud auth activate-service-account --key-file=key.json
+
+      - name: Deploy Application
+        run: |
+          cd ${pwd}/cloudsql/
+          terraform init
+          terraform apply -auto-approve -var-file="terraform.tfvars"
+
+      - name: Clean up
+        run: |
+          cd path/to/terraform/configuration
+          terraform destroy -auto-approve -var="application_name=${{ github.event.inputs.application_name }}"
