@@ -1,21 +1,33 @@
 provider "google" {
-  region      = var.region
+  credentials = file(var.gcp_credentials_file)
+  project     = var.project_id
+  region      = "asia-east1"
 }
 
-resource "google_cloud_run_service" "my_service" {
-  name     = "my-cloud-run-service"
-  location = var.region  # Change this to your desired region
+resource "google_cloud_run_service" "my_cloud_run_service" {
+  name     = "your-service-name"
+  location = "asia-east1"
 
   template {
     spec {
       containers {
-        image = var.image
+        image = "gcr.io/${var.project_id}/your-image-name:${var.image_tag}"
       }
     }
   }
+}
 
-  traffic {
-    percent         = 100
-    latest_revision = true
-  }
+variable "project_id" {
+  description = "Google Cloud project ID"
+  type        = string
+}
+
+variable "gcp_credentials_file" {
+  description = "Path to the Google Cloud service account key file"
+  type        = string
+}
+
+variable "image_tag" {
+  description = "The Docker image tag to deploy"
+  type        = string
 }
