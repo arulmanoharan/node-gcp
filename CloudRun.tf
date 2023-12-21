@@ -11,7 +11,7 @@ resource "google_cloud_run_service" "my_cloud_run_service" {
   template {
     spec {
       containers {
-        image = "gcr.io/${var.project_id}/your-image-name:${var.image_tag}"
+        image = "gcr.io/${var.project_id}/node_app:${var.image_tag}"
       }
     }
   }
