@@ -5,7 +5,7 @@ provider "google" {
 }
 
 resource "google_cloud_run_service" "my_cloud_run_service" {
-  name     = "your-service-name"
+  name     = "node_gcp_cloud_run"
   location = "asia-east1"
 
   template {
