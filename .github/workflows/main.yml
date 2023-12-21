@@ -53,6 +53,8 @@ jobs:
           
     - name: Create Environment File
       run: echo "IMAGE_SHA=${{ github.sha }}" >> $GITHUB_ENV
+    - name: Debug Terraform Apply
+      run: echo "terraform apply -auto-approve -var=\"project_id=${{ secrets.GCP_PROJECT_ID }}\" -var=\"gcp_credentials_file=${{ secrets.GCP_SA_KEY }}\" -var=\"image_tag=${{ github.sha }}\""
 
     - name: Apply Terraform Changes
       run:  terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="gcp_credentials_file=${{ secrets.GCP_SA_KEY }}" -var="image_tag=${{ github.sha }}" .
