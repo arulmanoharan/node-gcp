@@ -20,16 +20,13 @@ jobs:
         with:
           terraform_version: 1.0.9
 
-      - name: Configure GCP credentials
+      - name: Configure Cloud Provider Credentials
         run: echo "$GCP_SA_KEY" > key.json && gcloud auth activate-service-account --key-file=key.json
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
       - name: Deploy Application
         run: |
           cd ${pwd}/cloudsql/
           terraform init
           terraform apply -auto-approve -var-file="terraform.tfvars"
-
-      - name: Clean up
-        run: |
-          cd path/to/terraform/configuration
-          terraform destroy -auto-approve -var="application_name=${{ github.event.inputs.application_name }}"
