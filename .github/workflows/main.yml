@@ -49,7 +49,7 @@ jobs:
 
     - name: Pull Docker Image from GCR
       run: |
-        docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/your-image-name:${{ github.sha }}
+        docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/node_app:${{ github.sha }}
           
     - name: Create Environment File
       run: echo "IMAGE_SHA=${{ github.sha }}" >> $GITHUB_ENV
