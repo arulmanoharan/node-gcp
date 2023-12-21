@@ -47,19 +47,18 @@ jobs:
         docker push $IMAGE_NAME:$GITHUB_SHA
         docker push $IMAGE_NAME:latest
 
-    - name: Retrieve Docker Image Tag from GCR
-      id: get-image-tag
+    - name: Pull Docker Image from GCR
       run: |
-        echo "image_tag=$(gcloud container images describe gcr.io/${{ secrets.GCP_PROJECT_ID }}/your-image-name --format='value(imageSummary.fullyDigest)')" >> $GITHUB_ENV
-
-    - name: Initialize Terraform
-      run: terraform init
+        docker pull gcr.io/${{ secrets.GCP_PROJECT_ID }}/your-image-name:${{ github.sha }}
+          
+    - name: Create Environment File
+      run: echo "IMAGE_SHA=${{ github.sha }}" >> $GITHUB_ENV
 
     - name: Apply Terraform Changes
       run: terraform apply -auto-approve \
           -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
           -var="gcp_credentials_file=${{ secrets.GCP_SA_KEY }}" \
-          -var="image_tag=${{ env.image_tag }}"
+          -var="image_tag=${{ env.IMAGE_SHA }}"
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
