@@ -1,6 +1,6 @@
 variable "region"{
-    type = String
+    type = string
 }
 variable "image"{
-    type = String
+    type = string
 }
