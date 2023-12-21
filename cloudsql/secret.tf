@@ -1,33 +1,24 @@
 provider "google" {
-  credentials = file("key2.json")
+  credentials = file("../key2.json")
   project     = var.project_id
-  region      = "us-central1" # or your desired region
+  region      = "asia-east1" 
 }
+
 
 resource "google_secret_manager_secret" "cloud_sql_secrets" {
-  count = 1
-
-  secret_id = "cloud-sql-secrets"
-
+  
+  for_each  = var.secrets
+  secret_id = each.value.name
   replication {
-    automatic = true
+    auto {
+      
+    }
   }
 }
 
-resource "google_secret_manager_secret_version" "cloud_sql_secrets_version" {
-  count = 1
-
-  secret_id = google_secret_manager_secret.cloud_sql_secrets.id
-
-  secret_data = {
-    hostname   = "your-cloud-sql-hostname"
-    username   = "your-cloud-sql-username"
-    password   = "your-cloud-sql-password"
-    database   = "your-cloud-sql-database"
-  }
+resource "google_secret_manager_secret_version" "hostname" {
+  for_each  = var.secrets
+  secret      = google_secret_manager_secret.cloud_sql_secrets[each.key].id
+  secret_data = each.value.secret_data
 }
 
-
-variable "project_id" {
-    type = string
-}
