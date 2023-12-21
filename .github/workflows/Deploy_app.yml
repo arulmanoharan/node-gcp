@@ -21,10 +21,10 @@ jobs:
           terraform_version: '1.0.0'
 
       - name: Authenticate to GCP
-        run: |
-          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > keyfile.json
-          gcloud auth activate-service-account --key-file=keyfile.json
-          rm keyfile.json
+        run: echo "$GCP_SA_KEY" > key.json && gcloud auth activate-service-account --key-file=key.json
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          
 
       - name: Configure Terraform Backend
         run: terraform init 
