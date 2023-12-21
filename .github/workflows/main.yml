@@ -55,7 +55,7 @@ jobs:
       run: echo "IMAGE_SHA=${{ github.sha }}" >> $GITHUB_ENV
 
     - name: Apply Terraform Changes
-      run:  
+      run: |
        terraform init
        terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="image_tag=${{ github.sha }}"
 
