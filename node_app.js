@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 const app = express();
-const port = process.env.PORT || 3000 ;
+const port = process.env.PORT;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -15,17 +15,11 @@ async function accessSecret() {
   const secretName = process.env.SECRET_NAME; 
 
   const client = new SecretManagerServiceClient();
-try{
   const [version] = await client.accessSecretVersion({
     name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
   });
-  return version.payload.data.toString('utf8');
-  } catch (err) {
-    console.error('Error fetching secret:', err);
-    return 'Error fetching secret';
-  }
-}
-  const secretValue = await accessSecret();
+
+  const secretValue = version.payload.data.toString('utf8');
   const secretObject = JSON.parse(secretValue);
 
   const connection = mysql.createConnection({
@@ -122,6 +116,9 @@ app.get('/api/data', (req, res) => {
     res.json(results);
   });
 });
+
+}
+accessSecret();
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
