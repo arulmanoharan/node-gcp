@@ -5,8 +5,8 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-const projectId = 'your-project-id';
-const secretName = 'your-secret-name';
+const projectId = process.env.PROJECT_ID;
+const secretName = process.env.SECRET_NAME;
 
 async function retrieveSecret() {
   const client = new SecretManagerServiceClient();
