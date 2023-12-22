@@ -11,7 +11,7 @@ async function getSecret() {
 
   try {
     const [version] = await client.accessSecretVersion({
-    name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
+    name: `projects/absolute-range-408808/secrets/cloudsql-secrets/versions/latest`,
   });
 
     return version.payload.data.toString('utf8');
