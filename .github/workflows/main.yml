@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         node_version: [14]
-        region: [asia-east1] 
+        region: [asia-south1] 
 
     steps:
     - name: Checkout code
@@ -57,7 +57,7 @@ jobs:
     - name: Apply Terraform Changes
       run: |
        terraform init
-       terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="image_tag=${{ github.sha }}"
+       terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="image_tag=${{ github.sha }}" -var="secretname=${{ secrets.SECRET_NAME }}"
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
