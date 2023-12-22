@@ -3,11 +3,14 @@ provider "google" {
   project     = var.project_id
   region      = "asia-south1"
 }
-
-data "google_secret_manager_secret_version" "my_secret" {
+data "google_secret_manager_secret" "my_secret" {
   project    = var.project_id
   secret_id  = "cloudsql-secrets"
   version_id = "latest"  # Change to the desired version if not the latest
+}
+
+data "google_secret_manager_secret_version" "my_secret" {
+  secret= google_secret_manager_secret.my_secret.name
 }
 
 resource "google_cloud_run_service" "my_cloud_run_service" {
