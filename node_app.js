@@ -15,11 +15,17 @@ async function accessSecret() {
   const secretName = process.env.SECRET_NAME; 
 
   const client = new SecretManagerServiceClient();
+try{
   const [version] = await client.accessSecretVersion({
     name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
   });
-
-  const secretValue = version.payload.data.toString('utf8');
+  return version.payload.data.toString('utf8');
+  } catch (err) {
+    console.error('Error fetching secret:', err);
+    return 'Error fetching secret';
+  }
+}
+  const secretValue = await accessSecret();
   const secretObject = JSON.parse(secretValue);
 
   const connection = mysql.createConnection({
@@ -41,7 +47,28 @@ connection.query(
   }
 );
 
-app.get('/', (req, res) => {
+app.get('/', async(req, res) => {
+const secretValue = await accessSecret();
+  const secretObject = JSON.parse(secretValue);
+
+  const connection = mysql.createConnection({
+    host: secretObject.connection_name,
+    user: secretObject.username,
+    password: secretObject.password,
+    database: secretObject.database_name,
+  });
+
+// Create a table if it doesn't exist
+connection.query(
+  `CREATE TABLE IF NOT EXISTS uname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+  )`,
+  (error) => {
+    if (error) throw error;
+    console.log('Table created or already exists');
+  }
+);
   res.send(`
     <html>
       <body>
@@ -83,7 +110,28 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.post('/api/add', (req, res) => {
+app.post('/api/add', async(req, res) => {
+ const secretValue = await accessSecret();
+  const secretObject = JSON.parse(secretValue);
+
+  const connection = mysql.createConnection({
+    host: secretObject.connection_name,
+    user: secretObject.username,
+    password: secretObject.password,
+    database: secretObject.database_name,
+  });
+
+// Create a table if it doesn't exist
+connection.query(
+  `CREATE TABLE IF NOT EXISTS uname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+  )`,
+  (error) => {
+    if (error) throw error;
+    console.log('Table created or already exists');
+  }
+);
   const { name } = req.body;
 
   if (!name) {
@@ -103,7 +151,28 @@ app.post('/api/add', (req, res) => {
   });
 });
 
-app.get('/api/data', (req, res) => {
+app.get('/api/data', async(req, res) => {
+ const secretValue = await accessSecret();
+  const secretObject = JSON.parse(secretValue);
+
+  const connection = mysql.createConnection({
+    host: secretObject.connection_name,
+    user: secretObject.username,
+    password: secretObject.password,
+    database: secretObject.database_name,
+  });
+
+// Create a table if it doesn't exist
+connection.query(
+  `CREATE TABLE IF NOT EXISTS uname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+  )`,
+  (error) => {
+    if (error) throw error;
+    console.log('Table created or already exists');
+  }
+);
   // Fetch data from the database
   connection.query('SELECT name FROM uname', (error, results) => {
     if (error) {
@@ -116,9 +185,6 @@ app.get('/api/data', (req, res) => {
     res.json(results);
   });
 });
-
-}
-accessSecret();
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
