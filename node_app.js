@@ -1,8 +1,9 @@
 const express = require('express');
+const mysql = require('mysql');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 async function getSecret() {
   const client = new SecretManagerServiceClient();
@@ -34,17 +35,38 @@ app.get('/', async (req, res) => {
     const secretCredentials = JSON.parse(secretData);
 
     const connectionPool = await createConnectionPool(secretCredentials);
-    await createTable(connectionPool);
+    const insertDataQuery = 'INSERT INTO secrets (username, password) VALUES (?, ?)';
+    const insertDataValues = [secretCredentials.username, secretCredentials.password];
+    connectionPool.query(
+      `CREATE TABLE IF NOT EXISTS secrets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255),
+        password VARCHAR(255)
+      )`,
+      (error) => {
+        if (error) throw error;
+        console.log('Table created or already exists');
+      }
+    );
 
-    // Check if the connection is established
-    await checkConnection(connectionPool);
+    connectionPool.query('INSERT INTO secrets (name, password) VALUES (?, ?)', insertDataValues);
 
-    // If the checkConnection() does not throw an error, the connection is established
-    res.send('<h1>Connection Established</h1>');
+    connectionPool.query('SELECT * FROM secrets', (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        res.status(500).send('Internal Server Error');
+        return;
+      }
+    
+      res.send(results);
+    });
+
+  
+    
   } catch (err) {
     console.error('Error:', err);
     res.status(500).send('<h1>Connection Failed</h1>');
-  }
+   }
 });
 
 app.listen(port, () => {
