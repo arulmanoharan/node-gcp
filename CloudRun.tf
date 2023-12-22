@@ -11,7 +11,7 @@ resource "google_cloud_run_service" "my_cloud_run_service" {
   template {
     spec {
       containers {
-        image = "gcr.io/${var.project_id}/node_app:${var.image_tag}"
+        image = "gcr.io/${var.project_id}/${var.secretname}:${var.image_tag}"
       }
     }
   }
@@ -29,5 +29,10 @@ variable "gcp_credentials_file" {
 
 variable "image_tag" {
   description = "The Docker image tag to deploy"
+  type        = string
+}
+
+variable "secretname" {
+  description = "The conatiner name"
   type        = string
 }
