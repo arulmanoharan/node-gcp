@@ -1,17 +1,15 @@
-onst express = require('express');
+const express = require('express');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 const app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 3000;
 
 async function getSecret() {
   const client = new SecretManagerServiceClient();
-  const projectId = process.env.GCP_PROJECT_ID; 
-  const secretName = process.env.SECRET_NAME;
 
   try {
     const [version] = await client.accessSecretVersion({
-    name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
+    name: `projects/absolute-range-408808/secrets/cloudsql-secrets/versions/latest`,
   });
 
     return version.payload.data.toString('utf8');
