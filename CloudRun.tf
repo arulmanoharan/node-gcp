@@ -22,10 +22,10 @@ variable "project_id" {
   type        = string
 }
 
-variable "gcp_credentials_file" {
-  description = "Path to the Google Cloud service account key file"
-  type        = string
-}
+# variable "gcp_credentials_file" {
+#   description = "Path to the Google Cloud service account key file"
+#   type        = string
+# }
 
 variable "image_tag" {
   description = "The Docker image tag to deploy"
