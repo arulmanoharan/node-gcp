@@ -1,47 +1,87 @@
-const express = require('express');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+const mysql = require('mysql2');
+const express = require('express');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-async function getSecret() {
+const projectId = 'your-project-id';
+const secretName = 'your-secret-name';
+
+async function retrieveSecret() {
   const client = new SecretManagerServiceClient();
-
-  try {
-    const [version] = await client.accessSecretVersion({
-    name: `projects/absolute-range-408808/secrets/cloudsql-secrets/versions/latest`,
+  const [version] = await client.accessSecretVersion({
+    name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
   });
 
-    return version.payload.data.toString('utf8');
-  } catch (err) {
-    console.error('Error fetching secret:', err);
-    return 'Error fetching secret';
+  return version.payload.data.toString();
+}
+
+async function createConnectionPool(credentials) {
+  return mysql.createPool({
+    user: credentials.username,
+    password: credentials.password,
+    database: credentials.database_name,
+    host: credentials.connection_name,
+  });
+}
+
+async function createTable(connectionPool) {
+  const connection = await connectionPool.promise().getConnection();
+
+  try {
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS credentials (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL
+      )
+    `;
+
+    await connection.query(createTableQuery);
+    console.log('Table created successfully.');
+  } finally {
+    connection.release();
+  }
+}
+
+async function fetchTableData(connectionPool) {
+  const connection = await connectionPool.promise().getConnection();
+
+  try {
+    const query = 'SELECT * FROM credentials';
+    const [rows] = await connection.query(query);
+    return rows;
+  } finally {
+    connection.release();
   }
 }
 
 app.get('/', async (req, res) => {
-  const secretValue = await getSecret();
-  const secretObject = JSON.parse(secretValue);
-  // Send an HTML page with the secret value
-  const htmlPage = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Secret Display Page</title>
-      </head>
-      <body>
-        <h1>Secret Value:</h1>
-        <p>${secretObject.connection_name}</p>
-        <p>${secretObject.username}</p>
-        <p>${secretObject.password}</p>
-        <p>${secretObject.database}</p>
-      </body>
-    </html>
-  `;
+  try {
+    const secretData = await retrieveSecret();
+    const secretCredentials = JSON.parse(secretData);
 
-  res.send(htmlPage);
+    const connectionPool = await createConnectionPool(secretCredentials);
+    await createTable(connectionPool);
+
+    const tableData = await fetchTableData(connectionPool);
+
+    let html = '<h1>Table Details</h1>';
+    html += '<table border="1"><tr><th>ID</th><th>Username</th><th>Password</th></tr>';
+    
+    tableData.forEach(row => {
+      html += `<tr><td>${row.id}</td><td>${row.username}</td><td>${row.password}</td></tr>`;
+    });
+
+    html += '</table>';
+    res.send(html);
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server listening at http://localhost:${port}`);
 });
