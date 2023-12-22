@@ -3,17 +3,21 @@ const mysql = require('mysql');
 const bodyParser = require('body-parser');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const dbConfig = {
-  host: '34.93.248.172',
-  user: 'master',
-  password: 'master',
-  database: 'databsenodesql',
-};
+const port = process.env.PORT || 8080;
+
+const connectionData = JSON.parse(process.env.DB_SECRET);
+
+const connection = mysql.createConnection({
+  host: connectionData.host,
+  user: connectionData.user,
+  password: connectionData.password,
+  database: connectionData.database,
+});
 
 const pool = mysql.createPool(dbConfig);
 
