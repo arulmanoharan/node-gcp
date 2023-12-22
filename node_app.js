@@ -3,14 +3,15 @@ const mysql = require('mysql');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 const app = express();
-const port = process.env.PORT || 3001;
-
+const port = process.env.PORT || 3000;
+const projectId = process.env.PROJECT_ID;
+const secretName = process.env.SECRET_NAME;
 async function getSecret() {
   const client = new SecretManagerServiceClient();
 
   try {
     const [version] = await client.accessSecretVersion({
-    name: `projects/absolute-range-408808/secrets/cloudsql-secrets/versions/latest`,
+    name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
   });
 
     return version.payload.data.toString('utf8');
