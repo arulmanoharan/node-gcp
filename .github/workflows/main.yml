@@ -16,6 +16,12 @@ jobs:
         node_version: [14]
         region: [asia-south1] 
 
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GITHUB_SHA: ${{ github.sha }}
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+      SECRET_NAME: ${{ secrets.SECRET_NAME }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -60,9 +66,3 @@ jobs:
       run: |
        terraform init
        terraform apply -auto-approve -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="image_tag=${{ github.sha }}" -var="secretname=${{ secrets.SECRET_NAME }}"
-
-env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GITHUB_SHA: ${{ github.sha }}
-  GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
-  SECRET_NAME: ${{ secrets.SECRET_NAME }}
