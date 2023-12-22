@@ -54,6 +54,16 @@ async function createConnection() {
 
 app.get('/', async (req, res) => {
   const connection = await createConnection();
+  connection.query(
+  `CREATE TABLE IF NOT EXISTS uname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255)
+  )`,
+  (error) => {
+    if (error) throw error;
+    console.log('Table created or already exists');
+  }
+);
 
   if (connection) {
     try {
