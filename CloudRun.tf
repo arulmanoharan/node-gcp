@@ -23,6 +23,10 @@ resource "google_cloud_run_service" "my_cloud_run_service" {
       }
     }
   }
+iam_identity {
+    service_account = google_cloud_run_service.my_cloud_run_service.service_account_email
+    role            = "roles/run.invoker"
+  }
 }
 
 resource "google_cloud_run_service_identity" "my_service" {
