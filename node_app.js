@@ -10,161 +10,172 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 
-async function accessSecret() {
+async function getSecret() {
+  const client = new SecretManagerServiceClient();
   const projectId = process.env.GCP_PROJECT_ID; 
   const secretName = process.env.SECRET_NAME; 
 
-  const client = new SecretManagerServiceClient();
+  
 try{
   const [version] = await client.accessSecretVersion({
     name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
   });
-  return version.payload.data.toString('utf8');
+      return version.payload.data.toString('utf8');
   } catch (err) {
     console.error('Error fetching secret:', err);
-    return 'Error fetching secret';
+    return null;
   }
 }
- 
-app.get('/', async(req, res) => {
-const secretValue = await accessSecret();
-  const secretObject = JSON.parse(secretValue);
 
-  const connection = mysql.createConnection({
-    host: secretObject.connection_name,
-    user: secretObject.username,
-    password: secretObject.password,
-    database: secretObject.database_name,
-  });
+async function createConnection() {
+  const secretValue = await getSecret();
 
-// Create a table if it doesn't exist
-connection.query(
-  `CREATE TABLE IF NOT EXISTS uname (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255)
-  )`,
-  (error) => {
-    if (error) throw error;
-    console.log('Table created or already exists');
+  if (!secretValue) {
+    console.error('Secret value is null or undefined. Unable to establish database connection.');
+    return null;
   }
-);
-  res.send(`
-    <html>
-      <body>
-        <form action="/api/add" method="post">
-          <label for="name">Enter your name:</label>
-          <input type="text" id="name" name="name">
-          <button type="submit">Submit Name</button>
-        </form>
 
-        <button onclick="fetchData()">Fetch Data</button>
-        <div id="data-container"></div>
+  try {
+    const config = JSON.parse(secretValue);
 
-        <script>
-          async function fetchData() {
-            try {
-              const response = await fetch('/api/data');
-              const data = await response.json();
+    const connection = await mysql.createConnection({
+      host: config.host,
+      user: config.user,
+      password: config.password,
+      database: config.database,
+    });
 
-              // Display the data in the 'data-container' div
-              const dataContainer = document.getElementById('data-container');
-              dataContainer.innerHTML = '<h2>Data from Cloud SQL Database:</h2>';
+    return connection;
+  } catch (error) {
+    console.error('Error creating database connection:', error);
+    return null;
+  }
+}
 
-              if (data.length === 0) {
-                dataContainer.innerHTML += '<p>No data available.</p>';
-              } else {
-                dataContainer.innerHTML += '<ul>';
-                data.forEach(item => {
-                  dataContainer.innerHTML += '<li>' + item.name + '</li>';
-                });
-                dataContainer.innerHTML += '</ul>';
-              }
-            } catch (error) {
-              console.error('Error fetching data:', error);
-            }
-          }
-        </script>
-      </body>
-    </html>
-  `);
+app.get('/', async (req, res) => {
+  const connection = await createConnection();
+
+  if (connection) {
+    try {
+      // Fetch the list of names from the 'uname' table
+      const [rows] = await connection.execute('SELECT * FROM uname');
+
+      // Render the HTML page with the list of names and a form to add new names
+      const htmlPage = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Name List</title>
+          </head>
+          <body>
+            <h1>Name List:</h1>
+            <table border="1">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+              </tr>
+              ${rows.map(row => `
+                <tr>
+                  <td>${row.id}</td>
+                  <td>${row.name}</td>
+                </tr>`).join('')}
+            </table>
+            <h2>Add New Name:</h2>
+            <form action="/addname" method="post">
+              <label for="newName">Name:</label>
+              <input type="text" id="newName" name="newName" required>
+              <button type="submit">Add Name</button>
+            </form>
+            <h2>Print Names:</h2>
+            <form action="/printnames" method="get">
+              <button type="submit">Print Names</button>
+            </form>
+          </body>
+        </html>
+      `;
+
+      res.send(htmlPage);
+    } catch (error) {
+      console.error('Error fetching name list:', error);
+      res.status(500).send('Internal Server Error');
+    } finally {
+      // Close the database connection after use
+      connection.end();
+    }
+  } else {
+    // Connection failed, send an error response
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-app.post('/api/add', async(req, res) => {
- const secretValue = await accessSecret();
-  const secretObject = JSON.parse(secretValue);
+app.post('/addname', async (req, res) => {
+  const connection = await createConnection();
 
-  const connection = mysql.createConnection({
-    host: secretObject.connection_name,
-    user: secretObject.username,
-    password: secretObject.password,
-    database: secretObject.database_name,
-  });
+  if (connection) {
+    try {
+      const { newName } = req.body;
 
-// Create a table if it doesn't exist
-connection.query(
-  `CREATE TABLE IF NOT EXISTS uname (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255)
-  )`,
-  (error) => {
-    if (error) throw error;
-    console.log('Table created or already exists');
-  }
-);
-  const { name } = req.body;
+      if (!newName) {
+        res.status(400).send('Name is required.');
+        return;
+      }
 
-  if (!name) {
-    res.status(400).json({ error: 'Name is required' });
-    return;
-  }
+      // Insert the new name into the 'uname' table
+      await connection.execute('INSERT INTO uname (name) VALUES (?)', [newName]);
 
-  // Insert the name into the database
-  connection.query('INSERT INTO uname (name) VALUES (?)', [name], (error) => {
-    if (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-      return;
+      // Redirect back to the root route to display the updated name list
+      res.redirect('/');
+    } catch (error) {
+      console.error('Error adding new name:', error);
+      res.status(500).send('Internal Server Error');
+    } finally {
+      // Close the database connection after use
+      connection.end();
     }
-
-    res.redirect('/');
-  });
+  } else {
+    // Connection failed, send an error response
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-app.get('/api/data', async(req, res) => {
- const secretValue = await accessSecret();
-  const secretObject = JSON.parse(secretValue);
+app.get('/printnames', async (req, res) => {
+  const connection = await createConnection();
 
-  const connection = mysql.createConnection({
-    host: secretObject.connection_name,
-    user: secretObject.username,
-    password: secretObject.password,
-    database: secretObject.database_name,
-  });
+  if (connection) {
+    try {
+      // Fetch the list of names from the 'uname' table
+      const [rows] = await connection.execute('SELECT * FROM uname');
 
-// Create a table if it doesn't exist
-connection.query(
-  `CREATE TABLE IF NOT EXISTS uname (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255)
-  )`,
-  (error) => {
-    if (error) throw error;
-    console.log('Table created or already exists');
-  }
-);
-  // Fetch data from the database
-  connection.query('SELECT name FROM uname', (error, results) => {
-    if (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-      return;
+      // Render the HTML page with the list of names
+      const htmlPage = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Names</title>
+          </head>
+          <body>
+            <h1>Names:</h1>
+            <ul>
+              ${rows.map(row => `<li>${row.name}</li>`).join('')}
+            </ul>
+          </body>
+        </html>
+      `;
+
+      res.send(htmlPage);
+    } catch (error) {
+      console.error('Error fetching name list:', error);
+      res.status(500).send('Internal Server Error');
+    } finally {
+      // Close the database connection after use
+      connection.end();
     }
-
-    // Send the data as JSON
-    res.json(results);
-  });
+  } else {
+    // Connection failed, send an error response
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });
