@@ -15,7 +15,7 @@ COPY . .
 # Expose the application port (if needed)
 EXPOSE 3000
 
-ENV GOOGLE_APPLICATION_CREDENTIALS=key2.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=/usr/src/app/key2.json
 
 # Define the command to run your application
 CMD ["node","node_app.js"]
