@@ -25,28 +25,7 @@ try{
     return 'Error fetching secret';
   }
 }
-  const secretValue = await accessSecret();
-  const secretObject = JSON.parse(secretValue);
-
-  const connection = mysql.createConnection({
-    host: secretObject.connection_name,
-    user: secretObject.username,
-    password: secretObject.password,
-    database: secretObject.database_name,
-  });
-
-// Create a table if it doesn't exist
-connection.query(
-  `CREATE TABLE IF NOT EXISTS uname (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255)
-  )`,
-  (error) => {
-    if (error) throw error;
-    console.log('Table created or already exists');
-  }
-);
-
+ 
 app.get('/', async(req, res) => {
 const secretValue = await accessSecret();
   const secretObject = JSON.parse(secretValue);
