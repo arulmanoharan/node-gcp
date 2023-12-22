@@ -29,31 +29,22 @@ async function createConnectionPool(credentials) {
 }
 
 app.get('/', async (req, res) => {
-  const secretValue = await getSecret();
-  const secretObject = JSON.parse(secretValue);
-  const connection = await createConnectionPool(secretObject);
-  // Send an HTML page with the secret value
-  connection.query(
-    `CREATE TABLE IF NOT EXISTS uname (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255),
-      password VARCHAR(255)
-    )`,
-    (error) => {
-      if (error) throw error;
-      console.log('Table created or already exists');
-    }
-  );
-  const [rows] = connection.query('SELECT * from uname');
-  let html = '<h1>Table Details</h1>';
-    html += '<table border="1"><tr><th>ID</th><th>Username</th><th>Password</th></tr>';
-    
-    tableData.forEach(row => {
-      html += `<tr><td>${row.id}</td><td>${row.username}</td><td>${row.password}</td></tr>`;
-    });
+  try {
+    const secretData = await getSecret();
+    const secretCredentials = JSON.parse(secretData);
 
-    html += '</table>';
-    res.send(html);
+    const connectionPool = await createConnectionPool(secretCredentials);
+    await createTable(connectionPool);
+
+    // Check if the connection is established
+    await checkConnection(connectionPool);
+
+    // If the checkConnection() does not throw an error, the connection is established
+    res.send('<h1>Connection Established</h1>');
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('<h1>Connection Failed</h1>');
+  }
 });
 
 app.listen(port, () => {
