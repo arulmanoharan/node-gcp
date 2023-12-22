@@ -21,13 +21,14 @@ resource "google_cloud_run_service" "my_cloud_run_service" {
     spec {
       containers {
         image = "gcr.io/${var.project_id}/${var.secretname}:${var.image_tag}"
-      }
-     container_port = 3000
-     env = [
+        container_port = 3000
+env = [
      { name  = "DB_SECRET",
             value = data.google_secret_manager_secret_version.my_secret.secret_data,
      },
 ]
+      }
+    
     }
    metadata {
       annotations = {
