@@ -4,9 +4,9 @@ variable "project_id"{
 }
 
 
-variable "secrets" {
-  type = map(object({
-    name        = string
-    secret_data = string
-  }))
-}
+# variable "secrets" {
+#   type = map(object({
+#     name        = string
+#     secret_data = string
+#   }))
+# }

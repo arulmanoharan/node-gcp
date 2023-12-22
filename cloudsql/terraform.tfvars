@@ -1,0 +1,5 @@
+secret_id = "cloudsql-secrets"
+cloudsqlname = "nodesqldatabase"
+dbname = "databsenodesql"
+username = "master"
+password = "master"

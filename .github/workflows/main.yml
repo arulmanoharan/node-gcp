@@ -63,3 +63,4 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GITHUB_SHA: ${{ github.sha }}
   GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+  SECRET_NAME: ${{ secrets.SECRET_NAME }}

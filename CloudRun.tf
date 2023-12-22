@@ -1,12 +1,12 @@
 provider "google" {
   credentials = file("key2.json")
   project     = var.project_id
-  region      = "asia-east1"
+  region      = "asia-south1"
 }
 
 resource "google_cloud_run_service" "my_cloud_run_service" {
   name     = "node_gcp_cloud_run"
-  location = "asia-east1"
+  location = "asia-south1"
 
   template {
     spec {
