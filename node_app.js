@@ -5,8 +5,8 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-const projectId = process.env.PROJECT_ID;
-const secretName = process.env.SECRET_NAME;
+const projectId = 'absolute-range-408808';
+const secretName = 'cloudsql-secrets';
 
 async function retrieveSecret() {
   const client = new SecretManagerServiceClient();
