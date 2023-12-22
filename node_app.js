@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -8,21 +9,28 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const port = process.env.PORT || 8080;
 
-const connectionData = JSON.parse(process.env.DB_SECRET);
+async function accessSecret() {
+  const projectId = process.env.GCP_PROJECT_ID; 
+  const secretName = process.env.SECRET_NAME; 
 
-const connection = mysql.createConnection({
-  host: connectionData.host,
-  user: connectionData.user,
-  password: connectionData.password,
-  database: connectionData.database,
-});
+  const client = new SecretManagerServiceClient();
+  const [version] = await client.accessSecretVersion({
+    name: `projects/${projectId}/secrets/${secretName}/versions/latest`,
+  });
 
-const pool = mysql.createPool(dbConfig);
+  const secretValue = version.payload.data.toString('utf8');
+  const secretObject = JSON.parse(secretValue);
+
+  const connection = mysql.createConnection({
+    host: secretObject.connection_name,
+    user: secretObject.username,
+    password: secretObject.password,
+    database: secretObject.database_name,
+  });
 
 // Create a table if it doesn't exist
-pool.query(
+connection.query(
   `CREATE TABLE IF NOT EXISTS uname (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255)
@@ -84,7 +92,7 @@ app.post('/api/add', (req, res) => {
   }
 
   // Insert the name into the database
-  pool.query('INSERT INTO uname (name) VALUES (?)', [name], (error) => {
+  connection.query('INSERT INTO uname (name) VALUES (?)', [name], (error) => {
     if (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -97,7 +105,7 @@ app.post('/api/add', (req, res) => {
 
 app.get('/api/data', (req, res) => {
   // Fetch data from the database
-  pool.query('SELECT name FROM uname', (error, results) => {
+  connection.query('SELECT name FROM uname', (error, results) => {
     if (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -112,3 +120,5 @@ app.get('/api/data', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+}
+accessSecret();
