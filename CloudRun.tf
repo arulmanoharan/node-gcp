@@ -4,6 +4,12 @@ provider "google" {
   region      = "asia-south1"
 }
 
+data "google_secret_manager_secret_version" "my_secret" {
+  project    = var.project_id
+  secret_id  = "cloudsql-secrets"
+  version_id = "latest"  # Change to the desired version if not the latest
+}
+
 resource "google_cloud_run_service" "my_cloud_run_service" {
   name     = "nodegcp-cloudrun"
   location = "asia-south1"
@@ -12,10 +18,13 @@ resource "google_cloud_run_service" "my_cloud_run_service" {
     spec {
       containers {
         image = "gcr.io/${var.project_id}/${var.secretname}:${var.image_tag}"
-        ports{
-          container_port = 3000
-        }
       }
+     container_port = 3000
+     env = [
+     { name  = "DB_SECRET",
+            value = data.google_secret_manager_secret_version.my_secret.secret_data,
+     },
+]
     }
    metadata {
       annotations = {
